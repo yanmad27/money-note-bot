@@ -78,14 +78,16 @@ func detectType(what string) string {
 
 func updateSheets(user string, what string, what_type string, quantity int, price int, timestamp time.Time) (string, error) {
 
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+
 	url := goDotEnvVariable("WEBHOOK_URL")
 	//add url search params
 	url += "&what=" + url2.QueryEscape(what)
 	url += "&what_type=" + url2.QueryEscape(what_type)
 	url += "&quantity=" + url2.QueryEscape(strconv.Itoa(quantity))
 	url += "&price=" + url2.QueryEscape(strconv.Itoa(price))
-	url += "&time=" + url2.QueryEscape(timestamp.Format("01/02/2006"))
-	url += "&time_detail=" + url2.QueryEscape(timestamp.Format("15:04:05"))
+	url += "&time=" + url2.QueryEscape(timestamp.In(loc).Format("01/02/2006"))
+	url += "&time_detail=" + url2.QueryEscape(timestamp.In(loc).Format("15:04:05"))
 	url += "&user=" + url2.QueryEscape(user)
 	Info.Println(url)
 	response, err := http.Get(url)
