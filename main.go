@@ -1,6 +1,7 @@
 package main
 
 import (
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 	"io/ioutil"
 	"log"
@@ -11,8 +12,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func goDotEnvVariable(key string) string {
@@ -77,7 +76,7 @@ func detectType(what string) string {
 	return "Gia dụng"
 }
 
-func updateSheets(user string, what string, what_type string, quantity int, price int) (string, error) {
+func updateSheets(user string, what string, what_type string, quantity int, price int, timestamp time.Time) (string, error) {
 
 	url := goDotEnvVariable("WEBHOOK_URL")
 	//add url search params
@@ -85,8 +84,8 @@ func updateSheets(user string, what string, what_type string, quantity int, pric
 	url += "&what_type=" + url2.QueryEscape(what_type)
 	url += "&quantity=" + url2.QueryEscape(strconv.Itoa(quantity))
 	url += "&price=" + url2.QueryEscape(strconv.Itoa(price))
-	url += "&time=" + url2.QueryEscape(time.Now().Format("01/02/2006"))
-	url += "&time_detail=" + url2.QueryEscape(time.Now().Format("15:04:05"))
+	url += "&time=" + url2.QueryEscape(timestamp.Format("01/02/2006"))
+	url += "&time_detail=" + url2.QueryEscape(timestamp.Format("15:04:05"))
 	url += "&user=" + url2.QueryEscape(user)
 	Info.Println(url)
 	response, err := http.Get(url)
@@ -166,7 +165,7 @@ func main() {
 				Error.Println(err)
 			}
 
-			response, err := updateSheets(update.Message.From.UserName, what, what_type, quantity, price)
+			response, err := updateSheets(update.Message.From.UserName, what, what_type, quantity, price, update.Message.Time())
 
 			if err != nil {
 				Error.Println(err)
