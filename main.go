@@ -78,7 +78,7 @@ func detectType(what string) string {
 
 func updateSheets(user string, what string, what_type string, quantity int, price int, timestamp time.Time) (string, error) {
 
-	loc, _ := time.LoadLocation("Asia/Shanghai")
+	loc, _ := time.LoadLocation("Asia/Bangkok")
 
 	url := goDotEnvVariable("WEBHOOK_URL")
 	//add url search params
