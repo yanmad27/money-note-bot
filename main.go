@@ -1,19 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"github.com/Pramod-Devireddy/go-exprtk"
+	//"github.com/Pramod-Devireddy/go-exprtk"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
-	"io/ioutil"
 	"log"
-	"net/http"
-	url2 "net/url"
 	"os"
-	"regexp"
 	"strconv"
-	"strings"
-	"time"
 )
 
 func goDotEnvVariable(key string) string {
@@ -26,60 +19,6 @@ func goDotEnvVariable(key string) string {
 	}
 
 	return os.Getenv(key)
-}
-
-func validateCommand(msg string) bool {
-
-	msg1 := msg
-	regex1 := regexp.MustCompile(`^/note\s(.+)\|(.+)\|(\d+)\|(.+)$`)
-	valid1 := regex1.MatchString(msg1)
-	fmt.Println("valid1", msg1, valid1)
-
-	msg2 := msg
-	regex2 := regexp.MustCompile(`^/note\s(.+)\|(.+)\|(\d+)$`)
-	valid2 := regex2.MatchString(msg2)
-	fmt.Println("valid2", msg2, valid2)
-	return valid1 || valid2
-}
-
-func calculatePrice(price string) int {
-	exprtkObj := exprtk.NewExprtk()
-
-	exprtkObj.SetExpression(price)
-
-	err := exprtkObj.CompileExpression()
-	if err != nil {
-		return 0
-	}
-
-	exprtkObj.SetDoubleVariableValue("x", 8)
-	return int(exprtkObj.GetEvaluatedValue())
-
-}
-
-func extractData(msg string) (error, string, string, int, int, string) {
-
-	data := strings.Split(msg, "|")
-	what := data[0]
-	what_type := detectType(what)
-	price := calculatePrice(data[1])
-
-	if price == 0 {
-		return fmt.Errorf("Giá tiền bị sai roài!"), "", "", 0, 0, ""
-	}
-
-	quantity, err := strconv.Atoi(data[2])
-	if err != nil {
-		return err, "", "", 0, 0, ""
-	}
-
-	var timestamp string
-	if len(data) == 4 {
-		timestamp = data[3]
-	} else {
-		timestamp = time.Now().Format("02/01/2006")
-	}
-	return nil, what, what_type, price, quantity, timestamp
 }
 
 func Format(n int) string {
@@ -105,56 +44,6 @@ func Format(n int) string {
 			out[j] = '.'
 		}
 	}
-}
-
-func detectType(what string) string {
-	what = strings.ToLower(what)
-
-	food_keyword := []string{"bbq", "food", "rau", "nước", "củ", "trái", "bánh", "kem", "mì", "bún", "phở", "cơm", "cháo", "chè", "cá", "thịt"}
-	for _, keyword := range food_keyword {
-		if strings.Contains(what, keyword) {
-			return "Food"
-		}
-	}
-
-	medicine_keyword := [5]string{"thuốc", "viên", "hộp", "gói", "chai"}
-	for _, keyword := range medicine_keyword {
-		if strings.Contains(what, keyword) {
-			return "Thuốc"
-		}
-	}
-
-	return "Gia dụng"
-}
-
-func updateSheets(user string, what string, what_type string, quantity int, price int, timestamp string) (string, error) {
-
-	loc, _ := time.LoadLocation("Asia/Ho_Chi_Minh")
-
-	url := goDotEnvVariable("WEBHOOK_URL")
-	//add url search params
-	url += "&what=" + url2.QueryEscape(what)
-	url += "&what_type=" + url2.QueryEscape(what_type)
-	url += "&quantity=" + url2.QueryEscape(strconv.Itoa(quantity))
-	url += "&price=" + url2.QueryEscape(strconv.Itoa(price))
-	url += "&time=" + url2.QueryEscape(timestamp)
-	url += "&time_detail=" + url2.QueryEscape(time.Now().In(loc).Format("02/01/2006 15:04:05"))
-	url += "&user=" + url2.QueryEscape(user)
-	Info.Println(url)
-	response, err := http.Get(url)
-
-	if err != nil {
-		Error.Println(err)
-		return "", err
-	}
-
-	response_data, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		Error.Println(err)
-		return "", err
-	}
-
-	return string(response_data), nil
 }
 
 func main() {
