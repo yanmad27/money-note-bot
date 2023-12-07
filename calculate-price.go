@@ -1,18 +1,14 @@
 package main
 
-import "github.com/Pramod-Devireddy/go-exprtk"
+import "github.com/vjeantet/govaluate"
 
 func calculatePrice(price string) int {
-	exprtkObj := exprtk.NewExprtk()
-
-	exprtkObj.SetExpression(price)
-
-	err := exprtkObj.CompileExpression()
+	expression, err := govaluate.NewEvaluableExpression(price)
 	if err != nil {
 		return 0
 	}
 
-	exprtkObj.SetDoubleVariableValue("x", 8)
-	return int(exprtkObj.GetEvaluatedValue())
+	result, err := expression.Evaluate(nil)
 
+	return int(result.(float64))
 }
