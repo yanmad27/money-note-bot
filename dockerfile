@@ -9,8 +9,6 @@ RUN go clean -modcache
 # Download Go modules
 COPY go.mod go.sum ./
 RUN go mod download
-RUN go get ./...
-RUN go get github.com/Pramod-Devireddy/go-exprtk \
 
 # Copy the source code. Note the slash at the end, as explained in
 # https://docs.docker.com/engine/reference/builder/#copy
