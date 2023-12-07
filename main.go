@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"github.com/Pramod-Devireddy/go-exprtk"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 	"io/ioutil"
@@ -27,8 +29,53 @@ func goDotEnvVariable(key string) string {
 }
 
 func validateCommand(msg string) bool {
-	regex := regexp.MustCompile(`^/note\s(.+)\|(\d+)\|(\d+)$`)
-	return regex.MatchString(msg)
+
+	msg1 := msg
+	regex1 := regexp.MustCompile(`^/note\s(.+)\|(.+)\|(\d+)\|(.+)$`)
+	valid1 := regex1.MatchString(msg1)
+	fmt.Println("valid1", msg1, valid1)
+
+	msg2 := msg
+	regex2 := regexp.MustCompile(`^/note\s(.+)\|(.+)\|(\d+)$`)
+	valid2 := regex2.MatchString(msg2)
+	fmt.Println("valid2", msg2, valid2)
+	return valid1 || valid2
+}
+
+func calculatePrice(price string) int {
+	exprtkObj := exprtk.NewExprtk()
+
+	exprtkObj.SetExpression(price)
+
+	err := exprtkObj.CompileExpression()
+	if err != nil {
+		return 0
+	}
+
+	exprtkObj.SetDoubleVariableValue("x", 8)
+	return int(exprtkObj.GetEvaluatedValue())
+
+}
+
+func extractData(msg string) (error, string, string, int, int, string) {
+
+	data := strings.Split(msg, "|")
+	what := data[0]
+	what_type := detectType(what)
+	price := calculatePrice(data[1])
+
+	quantity, err := strconv.Atoi(data[2])
+	if err != nil {
+		return err, "", "", 0, 0, ""
+	}
+
+	var timestamp string
+	if len(data) == 4 {
+		timestamp = data[3]
+	} else {
+		timestamp = time.Now().Format("02/01/2006")
+	}
+	return nil, what, what_type, price, quantity, timestamp
 }
 
 func Format(n int) string {
@@ -76,7 +123,7 @@ func detectType(what string) string {
 	return "Gia dụng"
 }
 
-func updateSheets(user string, what string, what_type string, quantity int, price int, timestamp time.Time) (string, error) {
+func updateSheets(user string, what string, what_type string, quantity int, price int, timestamp string) (string, error) {
 
 	loc, _ := time.LoadLocation("Asia/Ho_Chi_Minh")
 
@@ -86,8 +133,8 @@ func updateSheets(user string, what string, what_type string, quantity int, pric
 	url += "&what_type=" + url2.QueryEscape(what_type)
 	url += "&quantity=" + url2.QueryEscape(strconv.Itoa(quantity))
 	url += "&price=" + url2.QueryEscape(strconv.Itoa(price))
-	url += "&time=" + url2.QueryEscape(timestamp.In(loc).Format("01/02/2006"))
-	url += "&time_detail=" + url2.QueryEscape(timestamp.In(loc).Format("15:04:05"))
+	url += "&time=" + url2.QueryEscape(timestamp)
+	url += "&time_detail=" + url2.QueryEscape(time.Now().In(loc).Format("02/01/2006 15:04:05"))
 	url += "&user=" + url2.QueryEscape(user)
 	Info.Println(url)
 	response, err := http.Get(url)
@@ -122,7 +169,7 @@ func main() {
 
 	updates := bot.GetUpdatesChan(u)
 
-	init_message := "Hello my bae 🥰\nDùng cú pháp bên dưới nha\nCP: /note what|price|quantity\nVD: /note bánh mì|10000|2"
+	init_message := "Hello my bae 🥰\nDùng cú pháp bên dưới nha\nCP: /note what|price|quantity|time\nVD1: /note bánh mì|10000*2+5000*3|2\nVD2: /note bánh mì|10000*2+5000*3|2|07/11/1998"
 
 	for update := range updates {
 		if update.Message != nil && !update.Message.IsCommand() {
@@ -142,22 +189,21 @@ func main() {
 		switch update.Message.Command() {
 		case "note":
 			if !validateCommand(update.Message.Text) {
-				msg.Text = "Sai cú pháp rồi bae 🥺\nPhải như zị nè:\n/note bánh mì|10000|2"
+				msg.Text = "Sai cú pháp rồi bae 🥺\nPhải như zị nè:\n/note bánh mì|10000*2+5000*3|2|07/11/1998"
 				if _, err := bot.Send(msg); err != nil {
 					Error.Println(err)
 				}
 				continue
 			}
 
-			//split argu by "|"
-			args := strings.Split(update.Message.CommandArguments(), "|")
-			what := args[0]
-			price, err := strconv.Atoi(args[1])
-			quantity, err := strconv.Atoi(args[2])
-			what_type := detectType(what)
-
+			err, what, what_type, price, quantity, timestamp := extractData(update.Message.CommandArguments())
 			if err != nil {
-				Error.Println(err)
+				msg.Text = "Oops, em nhập sai gì đó rồi 🥺\nThử lại nha\n"
+				msg.Text += err.Error()
+				if _, err := bot.Send(msg); err != nil {
+					Error.Println(err)
+				}
+				continue
 			}
 
 			total := price * quantity
@@ -167,7 +213,7 @@ func main() {
 				Error.Println(err)
 			}
 
-			response, err := updateSheets(update.Message.From.UserName, what, what_type, quantity, price, update.Message.Time())
+			response, err := updateSheets(update.Message.From.UserName, what, what_type, quantity, price, timestamp)
 
 			if err != nil {
 				Error.Println(err)
