@@ -5,6 +5,7 @@ FROM golang:1.20
 # Set destination for COPY
 WORKDIR /app
 
+RUN go clean -modcache
 # Download Go modules
 COPY go.mod go.sum ./
 RUN go mod download
