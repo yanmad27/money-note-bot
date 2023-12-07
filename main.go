@@ -64,6 +64,10 @@ func extractData(msg string) (error, string, string, int, int, string) {
 	what_type := detectType(what)
 	price := calculatePrice(data[1])
 
+	if price == 0 {
+		return fmt.Errorf("Giá tiền bị sai roài!"), "", "", 0, 0, ""
+	}
+
 	quantity, err := strconv.Atoi(data[2])
 	if err != nil {
 		return err, "", "", 0, 0, ""
