@@ -7,19 +7,42 @@ import (
 func detectType(what string) string {
 	what = strings.ToLower(what)
 
-	food_keyword := []string{"bbq", "food", "rau", "nước", "củ", "trái", "bánh", "kem", "mì", "bún", "phở", "cơm", "cháo", "chè", "cá", "thịt"}
-	for _, keyword := range food_keyword {
+	device_keyword := []string{
+		"điện",
+		"đèn",
+		"tivi",
+		"tủ lạnh",
+		"máy",
+		"may",
+		"lò",
+		"rac",
+		"rác",
+		"rửa",
+		"bếp",
+		"chén",
+		"bát",
+		"nồi",
+		"xoong",
+		"chảo",
+		"bình",
+		"nước",
+	}
+	for _, keyword := range device_keyword {
 		if strings.Contains(what, keyword) {
-			return "Food"
+			return "Gia dụng"
 		}
 	}
 
-	medicine_keyword := [5]string{"thuốc", "viên", "hộp", "gói", "chai"}
+	medicine_keyword := [5]string{"thuốc",
+		"viên",
+		"hộp",
+		"gói",
+		"chai"}
 	for _, keyword := range medicine_keyword {
 		if strings.Contains(what, keyword) {
 			return "Thuốc"
 		}
 	}
 
-	return "Gia dụng"
+	return "Food"
 }
